@@ -118,8 +118,15 @@ export default function MatchExportacaoPage() {
       return;
     }
 
-    // Criar exportação
-    const exportacao = createExportacao(oferta.id, importadoraId);
+    // Debug - ver o que está sendo enviado
+    console.log('Parceiros antes de criar exportação:', parceiros);
+    console.log('Oferta ID:', oferta.id);
+    console.log('Importadora ID:', importadoraId);
+
+    // Criar exportação com os parceiros
+    const exportacao = createExportacao(oferta.id, importadoraId, parceiros);
+    
+    console.log('Exportação criada:', exportacao);
     
     if (exportacao) {
       alert('Match de Exportação finalizado com sucesso!');
@@ -160,7 +167,7 @@ export default function MatchExportacaoPage() {
             </div>
             <div>
               <p className="text-xs text-gray-500 font-medium mb-1">Quantidade</p>
-              <p className="text-sm font-semibold text-gray-900">{oferta.quantidade.toLocaleString()} Kg</p>
+              <p className="text-sm font-semibold text-gray-900">{oferta.quantidade} Kg</p>
             </div>
             <div>
               <p className="text-xs text-gray-500 font-medium mb-1">Valor Total</p>

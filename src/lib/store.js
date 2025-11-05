@@ -12,7 +12,8 @@ import {
   transportadoras,
   corretoras,
   produtos,
-  ofertasIniciais
+  ofertasIniciais,
+  exportacoesIniciais
 } from './seed';
 
 const useStore = create(
@@ -28,7 +29,7 @@ const useStore = create(
       corretoras,
       produtos,
       ofertas: ofertasIniciais,
-      exportacoes: [],
+      exportacoes: exportacoesIniciais,
 
   addOferta: (oferta) => {
     // Gerar ID sequencial baseado na última oferta
@@ -64,9 +65,12 @@ const useStore = create(
     }));
   },
 
-  createExportacao: (ofertaId, importadoraId) => {
+  createExportacao: (ofertaId, importadoraId, parceirosIniciais = null) => {
     const oferta = get().getOfertaById(ofertaId);
     const importadora = get().empresasImportadoras.find(e => e.id === importadoraId);
+    
+    console.log('=== createExportacao ===');
+    console.log('parceirosIniciais recebido:', parceirosIniciais);
     
     if (!oferta || !importadora) return null;
 
@@ -79,20 +83,136 @@ const useStore = create(
         }))
       : 0;
 
+    // Gerar número de contrato grande (12 dígitos)
+    const timestamp = Date.now().toString().slice(-8); // Últimos 8 dígitos do timestamp
+    const sequencial = (lastId + 1).toString().padStart(4, '0'); // 4 dígitos sequenciais
+    const numeroContrato = `${timestamp}${sequencial}`; // Total: 12 dígitos
+
+    // Se não vier parceiros, usar valores mockados
+    const parceiros = parceirosIniciais || {
+      financeira: get().financeiras[0]?.id || 'financeira-1',
+      despachante: get().despachantes[0]?.id || 'despachante-1',
+      seguradora: get().seguradoras[0]?.id || 'seguradora-1',
+      transportadora: get().transportadoras[0]?.id || 'transportadora-1',
+      corretora: get().corretoras[0]?.id || 'corretora-1'
+    };
+
+    console.log('parceiros finais que serão salvos:', parceiros);
+
+    // Determinar status - sempre PARTNERS_CONFIRMED já que tem parceiros mockados
+    const status = 'PARTNERS_CONFIRMED';
+
+    console.log('Status calculado:', status);
+
+    // Timeline mockada com 13 etapas
+    const baseDate = new Date();
+    const timeline = [
+      {
+        id: 1,
+        titulo: 'Extração',
+        descricao: 'Produto extraído da região de origem',
+        status: 'completed',
+        data: new Date(baseDate.getTime() + 0 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 2,
+        titulo: 'Disponibilizado Transporte',
+        descricao: 'Produto pronto para transporte',
+        status: 'completed',
+        data: new Date(baseDate.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 3,
+        titulo: 'Transporte',
+        descricao: 'Em rota para depósito',
+        status: 'completed',
+        data: new Date(baseDate.getTime() + 17 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 4,
+        titulo: 'Chegada Depósito',
+        descricao: 'Recebido no depósito local',
+        status: 'completed',
+        data: new Date(baseDate.getTime() + 20 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: 5,
+        titulo: 'Empacotamento',
+        descricao: 'Produto sendo empacotado para exportação',
+        status: 'in-progress',
+        data: new Date(baseDate.getTime() + 26 * 24 * 60 * 60 * 1000).toISOString(),
+        detalhes: 'Volume: 224 Sacas de 10Kg'
+      },
+      {
+        id: 6,
+        titulo: 'Despachante',
+        descricao: 'Documentação alfandegária em processo',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 7,
+        titulo: 'Disponibilizado Para Aduana',
+        descricao: 'Documentos enviados para aduana',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 8,
+        titulo: 'Aduana',
+        descricao: 'Em análise pela aduana',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 9,
+        titulo: 'Liberado',
+        descricao: 'Liberado pela aduana',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 10,
+        titulo: 'Transporte Internacional',
+        descricao: 'Em trânsito internacional',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 11,
+        titulo: 'Chegada Destino',
+        descricao: 'Chegou ao porto de destino',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 12,
+        titulo: 'Entrega',
+        descricao: 'Produto em entrega final',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 13,
+        titulo: 'Finalizado',
+        descricao: 'Processo concluído com sucesso',
+        status: 'pending',
+        data: null
+      }
+    ];
+
     const novaExportacao = {
       id: `exportacao-${lastId + 1}`,
+      numeroContrato,
       ofertaId,
       importadoraId,
-      status: 'MATCHED',
+      status,
       dataCriacao: new Date().toISOString(),
-      parceiros: {
-        financeira: null,
-        despachante: null,
-        seguradora: null,
-        transportadora: null,
-        corretora: null
-      }
+      parceiros,
+      timeline
     };
+
+    console.log('novaExportacao antes de salvar:', novaExportacao);
 
     set((state) => ({
       exportacoes: [...state.exportacoes, novaExportacao],
@@ -140,6 +260,53 @@ const useStore = create(
     }));
   },
 
+  // Atualizar etapa da timeline
+  updateTimelineStep: (exportacaoId, stepId, updates) => {
+    set((state) => ({
+      exportacoes: state.exportacoes.map(exp => {
+        if (exp.id === exportacaoId && exp.timeline) {
+          return {
+            ...exp,
+            timeline: exp.timeline.map(step =>
+              step.id === stepId ? { ...step, ...updates } : step
+            )
+          };
+        }
+        return exp;
+      })
+    }));
+  },
+
+  // Completar próxima etapa da timeline
+  completeNextTimelineStep: (exportacaoId) => {
+    set((state) => ({
+      exportacoes: state.exportacoes.map(exp => {
+        if (exp.id === exportacaoId && exp.timeline) {
+          const nextPendingIndex = exp.timeline.findIndex(step => step.status === 'pending');
+          if (nextPendingIndex !== -1) {
+            const updatedTimeline = [...exp.timeline];
+            updatedTimeline[nextPendingIndex] = {
+              ...updatedTimeline[nextPendingIndex],
+              status: 'completed',
+              data: new Date().toISOString()
+            };
+            
+            // Se ainda tem mais etapas pendentes, marca a próxima como in-progress
+            if (nextPendingIndex + 1 < updatedTimeline.length) {
+              updatedTimeline[nextPendingIndex + 1] = {
+                ...updatedTimeline[nextPendingIndex + 1],
+                status: 'in-progress'
+              };
+            }
+            
+            return { ...exp, timeline: updatedTimeline };
+          }
+        }
+        return exp;
+      })
+    }));
+  },
+
   getStats: () => {
     const state = get();
     const ofertasAbertas = state.ofertas.filter(o => o.status === 'ABERTA').length;
@@ -169,7 +336,140 @@ const useStore = create(
       partialize: (state) => ({
         ofertas: state.ofertas,
         exportacoes: state.exportacoes
-      })
+      }),
+      onRehydrateStorage: () => (state) => {
+        console.log('🔄 Rehydrating store...');
+        
+        // Se não houver exportações salvas, inicializar com as exportações iniciais
+        if (state && (!state.exportacoes || state.exportacoes.length === 0)) {
+          console.log('✅ Inicializando com exportação mockada');
+          state.exportacoes = exportacoesIniciais;
+        }
+        
+        // Se não houver ofertas salvas, inicializar com as ofertas iniciais
+        if (state && (!state.ofertas || state.ofertas.length === 0)) {
+          console.log('✅ Inicializando com ofertas mockadas');
+          state.ofertas = ofertasIniciais;
+        }
+        
+        console.log('📦 Exportações no store:', state?.exportacoes?.length || 0);
+        console.log('📋 Ofertas no store:', state?.ofertas?.length || 0);
+        
+        // Migrar exportações antigas que não têm numeroContrato ou timeline
+        if (state?.exportacoes) {
+          state.exportacoes = state.exportacoes.map((exp, index) => {
+            let updated = { ...exp };
+            
+            // Adicionar numeroContrato se não existir
+            if (!updated.numeroContrato) {
+              const timestamp = Date.now().toString().slice(-8);
+              const sequencial = (index + 1).toString().padStart(4, '0');
+              updated.numeroContrato = `${timestamp}${sequencial}`;
+            }
+            
+            // Adicionar timeline se não existir
+            if (!updated.timeline) {
+              const baseDate = new Date(updated.dataCriacao || new Date());
+              updated.timeline = [
+                {
+                  id: 1,
+                  titulo: 'Extração',
+                  descricao: 'Produto extraído da região de origem',
+                  status: 'completed',
+                  data: new Date(baseDate.getTime() + 0 * 24 * 60 * 60 * 1000).toISOString()
+                },
+                {
+                  id: 2,
+                  titulo: 'Disponibilizado Transporte',
+                  descricao: 'Produto pronto para transporte',
+                  status: 'completed',
+                  data: new Date(baseDate.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString()
+                },
+                {
+                  id: 3,
+                  titulo: 'Transporte',
+                  descricao: 'Em rota para depósito',
+                  status: 'completed',
+                  data: new Date(baseDate.getTime() + 17 * 24 * 60 * 60 * 1000).toISOString()
+                },
+                {
+                  id: 4,
+                  titulo: 'Chegada Depósito',
+                  descricao: 'Recebido no depósito local',
+                  status: 'completed',
+                  data: new Date(baseDate.getTime() + 20 * 24 * 60 * 60 * 1000).toISOString()
+                },
+                {
+                  id: 5,
+                  titulo: 'Empacotamento',
+                  descricao: 'Produto sendo empacotado para exportação',
+                  status: 'in-progress',
+                  data: new Date(baseDate.getTime() + 26 * 24 * 60 * 60 * 1000).toISOString(),
+                  detalhes: 'Volume: 224 Sacas de 10Kg'
+                },
+                {
+                  id: 6,
+                  titulo: 'Despachante',
+                  descricao: 'Documentação alfandegária em processo',
+                  status: 'pending',
+                  data: null
+                },
+                {
+                  id: 7,
+                  titulo: 'Disponibilizado Para Aduana',
+                  descricao: 'Documentos enviados para aduana',
+                  status: 'pending',
+                  data: null
+                },
+                {
+                  id: 8,
+                  titulo: 'Aduana',
+                  descricao: 'Em análise pela aduana',
+                  status: 'pending',
+                  data: null
+                },
+                {
+                  id: 9,
+                  titulo: 'Liberado',
+                  descricao: 'Liberado pela aduana',
+                  status: 'pending',
+                  data: null
+                },
+                {
+                  id: 10,
+                  titulo: 'Transporte Internacional',
+                  descricao: 'Em trânsito internacional',
+                  status: 'pending',
+                  data: null
+                },
+                {
+                  id: 11,
+                  titulo: 'Chegada Destino',
+                  descricao: 'Chegou ao porto de destino',
+                  status: 'pending',
+                  data: null
+                },
+                {
+                  id: 12,
+                  titulo: 'Entrega',
+                  descricao: 'Produto em entrega final',
+                  status: 'pending',
+                  data: null
+                },
+                {
+                  id: 13,
+                  titulo: 'Finalizado',
+                  descricao: 'Processo concluído com sucesso',
+                  status: 'pending',
+                  data: null
+                }
+              ];
+            }
+            
+            return updated;
+          });
+        }
+      }
     }
   )
 );

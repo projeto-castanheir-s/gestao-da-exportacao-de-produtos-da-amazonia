@@ -254,8 +254,8 @@ export const ofertasIniciais = [
     quantidade: 5000,
     valor: 125000,
     data: '2025-01',
-    status: 'ABERTA',
-    criadoEm: new Date().toISOString()
+    status: 'MATCHED', // Já tem exportação
+    criadoEm: new Date('2025-10-01').toISOString()
   },
   {
     id: 'oferta-2',
@@ -274,5 +274,115 @@ export const ofertasIniciais = [
   }
 ];
 
-// Exportações iniciais (vazio)
-export const exportacoesIniciais = [];
+// Exportações iniciais
+export const exportacoesIniciais = [
+  {
+    id: 'exportacao-1',
+    numeroContrato: '731234560001',
+    ofertaId: 'oferta-1',
+    importadoraId: 'empresa-imp-1',
+    status: 'IN_PROGRESS',
+    dataCriacao: new Date('2025-10-10').toISOString(),
+    parceiros: {
+      financeira: 'financeira-1',
+      despachante: 'despachante-1',
+      seguradora: 'seguradora-1',
+      transportadora: 'transportadora-1',
+      corretora: 'corretora-1'
+    },
+    timeline: [
+      {
+        id: 1,
+        titulo: 'Extração',
+        descricao: 'Produto extraído da região de origem',
+        status: 'completed',
+        data: new Date('2025-10-10').toISOString()
+      },
+      {
+        id: 2,
+        titulo: 'Disponibilizado Transporte',
+        descricao: 'Produto pronto para transporte',
+        status: 'completed',
+        data: new Date('2025-10-25').toISOString()
+      },
+      {
+        id: 3,
+        titulo: 'Transporte',
+        descricao: 'Em rota para depósito',
+        status: 'completed',
+        data: new Date('2025-10-27').toISOString()
+      },
+      {
+        id: 4,
+        titulo: 'Chegada Depósito',
+        descricao: 'Recebido no depósito local',
+        status: 'completed',
+        data: new Date('2025-10-30').toISOString()
+      },
+      {
+        id: 5,
+        titulo: 'Empacotamento',
+        descricao: 'Produto sendo empacotado para exportação',
+        status: 'completed',
+        data: new Date('2025-11-05').toISOString(),
+        detalhes: 'Volume: 500 Sacas de 10Kg'
+      },
+      {
+        id: 6,
+        titulo: 'Despachante',
+        descricao: 'Documentação alfandegária em processo',
+        status: 'completed',
+        data: new Date('2025-11-06').toISOString()
+      },
+      {
+        id: 7,
+        titulo: 'Disponibilizado Para Aduana',
+        descricao: 'Documentos enviados para aduana',
+        status: 'completed',
+        data: new Date('2025-11-12').toISOString()
+      },
+      {
+        id: 8,
+        titulo: 'Aduana',
+        descricao: 'Em análise pela aduana',
+        status: 'in-progress',
+        data: new Date('2025-11-15').toISOString()
+      },
+      {
+        id: 9,
+        titulo: 'Liberado',
+        descricao: 'Liberado pela aduana',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 10,
+        titulo: 'Transporte Internacional',
+        descricao: 'Em trânsito internacional',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 11,
+        titulo: 'Chegada Destino',
+        descricao: 'Chegou ao porto de destino',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 12,
+        titulo: 'Entrega',
+        descricao: 'Produto em entrega final',
+        status: 'pending',
+        data: null
+      },
+      {
+        id: 13,
+        titulo: 'Finalizado',
+        descricao: 'Processo concluído com sucesso',
+        status: 'pending',
+        data: null
+      }
+    ]
+  }
+];

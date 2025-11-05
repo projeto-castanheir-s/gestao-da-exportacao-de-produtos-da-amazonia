@@ -26,49 +26,82 @@ export default function DataTable({ columns, data, onRowClick = null }) {
 
   return (
     <div className="w-full">
-      {/* Table Container with horizontal scroll */}
-      <div className="overflow-x-auto -mx-4 sm:-mx-6">
-        <div className="inline-block min-w-full align-middle">
-          <div className="overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  {columns.map((column, index) => (
-                    <th
-                      key={index}
-                      className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {column.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {currentData.map((row, rowIndex) => (
-                  <tr
-                    key={rowIndex}
-                    onClick={() => onRowClick && onRowClick(row)}
-                    className={onRowClick ? 'hover:bg-gray-50 cursor-pointer transition-colors' : ''}
+      {/* Desktop Table View - Hidden on mobile */}
+      <div className="hidden lg:block overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((column, index) => (
+                <th
+                  key={index}
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  {column.label || column.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {currentData.map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                onClick={() => onRowClick && onRowClick(row)}
+                className={onRowClick ? 'hover:bg-gray-50 cursor-pointer transition-colors' : ''}
+              >
+                {columns.map((column, colIndex) => (
+                  <td
+                    key={colIndex}
+                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                   >
-                    {columns.map((column, colIndex) => (
-                      <td
-                        key={colIndex}
-                        className="px-4 sm:px-6 py-4 whitespace-nowrap text-xs sm:text-sm text-gray-900"
-                      >
-                        {column.render ? column.render(row) : row[column.accessor]}
-                      </td>
-                    ))}
-                  </tr>
+                    {column.render ? column.render(row) : row[column.accessor]}
+                  </td>
                 ))}
-              </tbody>
-            </table>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Card View - Hidden on desktop */}
+      <div className="lg:hidden space-y-4">
+        {currentData.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            onClick={() => onRowClick && onRowClick(row)}
+            className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm ${
+              onRowClick ? 'cursor-pointer active:bg-gray-50' : ''
+            }`}
+          >
+            {columns.map((column, colIndex) => {
+              // Pular a coluna de ações no card, ela vai no final
+              if (column.key === 'acoes') return null;
+              
+              return (
+                <div key={colIndex} className="mb-3 last:mb-0">
+                  <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                    {column.label || column.header}
+                  </div>
+                  <div className="text-sm text-gray-900">
+                    {column.render ? column.render(row) : row[column.accessor]}
+                  </div>
+                </div>
+              );
+            })}
+            
+            {/* Botões de ação no final do card */}
+            {columns.find(c => c.key === 'acoes') && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                {/* Renderizar o conteúdo da coluna de ações diretamente */}
+                {columns.find(c => c.key === 'acoes').render(row)}
+              </div>
+            )}
           </div>
-        </div>
+        ))}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6">
           <div className="text-xs sm:text-sm text-gray-700">
             Mostrando <span className="font-medium">{startIndex + 1}</span> a{' '}
             <span className="font-medium">{Math.min(endIndex, data.length)}</span> de{' '}
@@ -111,7 +144,7 @@ export default function DataTable({ columns, data, onRowClick = null }) {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-started"
+              className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Próxima
             </button>

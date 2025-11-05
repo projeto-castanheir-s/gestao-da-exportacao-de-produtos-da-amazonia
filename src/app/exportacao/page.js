@@ -4,7 +4,7 @@ import useStore from '@/lib/store';
 import Card from '@/components/Card';
 import DataTable from '@/components/DataTable';
 import PrimaryButton from '@/components/PrimaryButton';
-import { Eye, Ship, CheckCircle, Clock, FileText } from 'lucide-react';
+import { Eye, Ship, CheckCircle, Clock, FileText, TrendingUp } from 'lucide-react';
 
 export default function ExportacoesPage() {
   const router = useRouter();
@@ -22,6 +22,11 @@ export default function ExportacoesPage() {
     return importadora?.nome || 'N/A';
   };
 
+  // Função para pegar dados da oferta
+  const getOfertaData = (ofertaId) => {
+    return ofertas.find(o => o.id === ofertaId);
+  };
+
   const statusColors = {
     'MATCHED': 'bg-blue-100 text-blue-800',
     'PARTNERS_CONFIRMED': 'bg-yellow-100 text-yellow-800',
@@ -37,6 +42,15 @@ export default function ExportacoesPage() {
   };
 
   const columns = [
+    {
+      key: 'numeroContrato',
+      label: 'Nº Contrato',
+      render: (row) => (
+        <div className="font-mono text-sm font-medium text-gray-900">
+          #{row.numeroContrato || row.id.toUpperCase()}
+        </div>
+      )
+    },
     {
       key: 'exportadora',
       label: 'Exportadora',
@@ -56,8 +70,35 @@ export default function ExportacoesPage() {
       )
     },
     {
+      key: 'quantidade',
+      label: 'Quantidade',
+      render: (row) => {
+        const oferta = getOfertaData(row.ofertaId);
+        return (
+          <div className="text-gray-700 font-medium">
+            {oferta ? `${oferta.quantidade.toLocaleString('pt-BR')} Kg` : 'N/A'}
+          </div>
+        );
+      }
+    },
+    {
+      key: 'valor',
+      label: 'Valor Total',
+      render: (row) => {
+        const oferta = getOfertaData(row.ofertaId);
+        return (
+          <div className="text-menuGreen font-semibold">
+            {oferta ? new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL'
+            }).format(oferta.valor) : 'N/A'}
+          </div>
+        );
+      }
+    },
+    {
       key: 'dataCriacao',
-      label: 'Data Criação',
+      label: 'Data',
       render: (row) => (
         <div className="text-gray-600 text-sm">
           {new Date(row.dataCriacao).toLocaleDateString('pt-BR')}
@@ -77,12 +118,24 @@ export default function ExportacoesPage() {
       key: 'acoes',
       label: 'Ações',
       render: (row) => (
-        <button
-          onClick={() => router.push(`/exportacao/${row.id}`)}
-          className="text-menuGreen hover:text-menuGreen-light transition-colors"
-        >
-          <Eye size={20} />
-        </button>
+        <div className="flex items-center gap-2 lg:flex-row flex-col w-full">
+          <button
+            onClick={() => router.push(`/workflow/${row.id}`)}
+            className="w-full lg:w-auto flex items-center justify-center gap-2 px-4 py-2 border border-menuGreen text-menuGreen rounded-lg hover:bg-menuGreen hover:text-white transition-colors"
+            title="Ver timeline"
+          >
+            <TrendingUp size={20} />
+            <span className="lg:hidden font-medium">Ver Timeline</span>
+          </button>
+          <button
+            onClick={() => router.push(`/exportacao/${row.id}`)}
+            className="w-full lg:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-menuGreen text-white rounded-lg hover:bg-green-800 transition-colors"
+            title="Ver detalhes"
+          >
+            <Eye size={20} />
+            <span className="lg:hidden font-medium">Ver Detalhes</span>
+          </button>
+        </div>
       )
     }
   ];
